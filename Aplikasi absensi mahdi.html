@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#102b24">
+<title>SantriEdu — Absensi & Nilai Siswa</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root{
+ --forest:#102b24;
+ --forest2:#194638;
+ --gold:#d5b56a;
+ --cream:#f7f6f1;
+ --ink:#20342d;
+ --muted:#78867f;
+ --line:#e7e9e2;
+}
+*{box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);margin:0}
+.serif{font-family:'Playfair Display',serif}
+button,input,select,textarea{font:inherit}
+button{transition:all .18s ease}
+button:active{transform:scale(.98)}
+input,select,textarea{outline:none}
+input:focus,select:focus,textarea:focus{border-color:#548875!important;box-shadow:0 0 0 3px #54887518}
+.sidebar{background:var(--forest);color:#fff}
+.nav-btn{width:100%;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:11px;text-align:left;color:#b9cbc3;font-size:13px;font-weight:600;margin:3px 0}
+.nav-btn:hover{background:#ffffff10;color:white}
+.nav-btn.active{background:#ffffff17;color:#fff;border-left:3px solid var(--gold);padding-left:11px}
+.nav-icon{width:20px;text-align:center;font-size:17px}
+.page{display:none;animation:fadeIn .25s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.card{background:white;border:1px solid var(--line);border-radius:17px;box-shadow:0 3px 12px #1d352b04}
+.stat-card{padding:20px;position:relative;overflow:hidden}
+.stat-card:after{content:"";position:absolute;width:70px;height:70px;border-radius:50%;right:-25px;top:-25px;background:currentColor;opacity:.055}
+.btn-primary{background:var(--forest);color:white;padding:10px 15px;border-radius:10px;font-size:12px;font-weight:700}
+.btn-primary:hover{background:var(--forest2)}
+.btn-light{background:white;border:1px solid var(--line);padding:9px 13px;border-radius:10px;font-size:12px;font-weight:700}
+.btn-light:hover{background:#f4f6f1}
+.btn-gold{background:var(--gold);color:#26382e;padding:10px 15px;border-radius:10px;font-size:12px;font-weight:800}
+.field{width:100%;padding:10px 12px;border:1px solid #e2e7e0;border-radius:10px;background:white;font-size:13px;color:var(--ink)}
+.label{display:block;font-size:11px;font-weight:800;color:#65766d;margin-bottom:7px;letter-spacing:.2px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap}
+thead th{padding:13px 14px;text-align:left;background:#f8f9f6;color:#718077;font-size:10px;letter-spacing:.65px;text-transform:uppercase;font-weight:800;border-bottom:1px solid var(--line)}
+tbody td{padding:13px 14px;border-bottom:1px solid #f0f1ed}
+tbody tr:hover{background:#fafbf8}
+tbody tr:last-child td{border-bottom:0}
+.badge{display:inline-flex;align-items:center;padding:5px 9px;border-radius:7px;font-size:10px;font-weight:800}
+.badge-Hadir{background:#e2f5e9;color:#237446}
+.badge-Sakit{background:#fff0d8;color:#9a6417}
+.badge-Izin{background:#e4edff;color:#315caa}
+.badge-Alpa{background:#ffe6e4;color:#b3423d}
+.badge-belum{background:#f0f1ed;color:#89928c}
+.status-btn{padding:9px 10px;border-radius:9px;border:1px solid var(--line);font-size:11px;font-weight:800;flex:1}
+.status-btn.selected{box-shadow:inset 0 0 0 2px currentColor}
+.status-Hadir{color:#237446;background:#e2f5e9}
+.status-Sakit{color:#9a6417;background:#fff0d8}
+.status-Izin{color:#315caa;background:#e4edff}
+.status-Alpa{color:#b3423d;background:#ffe6e4}
+.student-card{padding:16px;background:white;border:1px solid var(--line);border-radius:15px;transition:.2s}
+.student-card:hover{border-color:#c8d8cd;box-shadow:0 7px 20px #142e2410;transform:translateY(-2px)}
+.avatar{width:40px;height:40px;border-radius:12px;background:#e7efe8;color:#23563f;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0}
+.modal-backdrop{position:fixed;inset:0;background:#0b201bc2;z-index:100;display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
+.modal-backdrop.open{display:flex}
+.modal-box{background:white;width:100%;max-width:530px;max-height:90vh;overflow-y:auto;border-radius:19px;padding:24px;animation:fadeIn .2s}
+.toast{position:fixed;bottom:24px;right:20px;z-index:200;background:#102b24;color:white;padding:14px 18px;border-radius:12px;font-size:12px;font-weight:700;box-shadow:0 10px 35px #0002;max-width:calc(100vw - 40px);animation:fadeIn .2s}
+.empty-state{text-align:center;padding:40px 16px;color:#87938b;font-size:12px}
+.section-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;letter-spacing:-.5px}
+.progress{height:6px;background:#edf0eb;border-radius:10px;overflow:hidden}
+.progress>div{height:100%;border-radius:10px;transition:width .3s}
+.mobile-menu{display:none}
+#reportCapture{background:white}
+@media(max-width:900px){
+ .sidebar{position:fixed;left:-280px;top:0;bottom:0;width:260px!important;z-index:80;transition:left .25s;box-shadow:10px 0 30px #0001}
+ .sidebar.open{left:0}
+ .mobile-menu{display:flex}
+ .main-content{margin-left:0!important}
+}
+@media(max-width:600px){
+ .content-pad{padding:15px!important}
+ .section-title{font-size:20px}
+ .stat-card{padding:15px}
+ .stat-number{font-size:25px!important}
+ .hide-mobile{display:none!important}
+ .modal-box{padding:18px}
+}
+@media print{
+ body{background:white!important}
+ .sidebar,.topbar,.no-print,.modal-backdrop,#toastContainer{display:none!important}
+ .main-content{margin:0!important;width:100%!important}
+ .content-pad{padding:0!important}
+ .page{display:none!important}
+ .page.active{display:block!important}
+ .card{box-shadow:none!important;break-inside:avoid}
+ table{font-size:10px}
+ thead th,tbody td{padding:7px!important}
+ #reportCapture{display:block!important}
+}
+</style>
+</head>
+
+<body>
+<div class="flex min-h-screen">
+
+<!-- SIDEBAR -->
+<aside id="sidebar" class="sidebar w-[250px] flex-shrink-0 flex flex-col min-h-screen">
+  <div class="px-5 pt-6 pb-5">
+    <div class="flex items-center gap-3">
+      <div class="w-11 h-11 rounded-xl bg-white flex items-center justify-center overflow-hidden">
+        <img id="sidebarLogo" alt="Logo sekolah" class="w-full h-full object-contain hidden">
+        <span id="sidebarLogoFallback" class="text-xl">🎓</span>
+      </div>
+      <div>
+        <div class="serif text-lg font-bold tracking-tight">Santri<span style="color:var(--gold)">Edu</span></div>
+        <div class="text-[9px] text-emerald-100/60 tracking-[1.6px] uppercase">Academic Management</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="px-5 pb-5">
+    <div class="rounded-xl p-3 border border-white/10 bg-white/5 flex items-center gap-3">
+      <div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm" style="background:var(--gold);color:#19362b">AM</div>
+      <div class="min-w-0">
+        <div class="text-xs font-bold truncate">Ahmad Mahdi, SE</div>
+        <div class="text-[10px] text-emerald-100/60 mt-1">Guru & Administrator</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="px-4 mb-2 text-[9px] font-bold uppercase tracking-[1.8px] text-emerald-100/40">Menu Utama</div>
+  <nav class="px-3">
+    <button class="nav-btn active" data-page="dashboard"><span class="nav-icon">◫</span> Dashboard</button>
+    <button class="nav-btn" data-page="attendance"><span class="nav-icon">✓</span> Input Absensi</button>
+    <button class="nav-btn" data-page="students"><span class="nav-icon">♙</span> Daftar Siswa</button>
+    <button class="nav-btn" data-page="grades"><span class="nav-icon">✎</span> Nilai Akademik</button>
+    <button class="nav-btn" data-page="reports"><span class="nav-icon">▤</span> Rekap & Laporan</button>
+  </nav>
+
+  <div class="px-4 mt-7 mb-2 text-[9px] font-bold uppercase tracking-[1.8px] text-emerald-100/40">Pengaturan</div>
+  <nav class="px-3">
+    <button class="nav-btn" data-page="settings"><span class="nav-icon">⚙</span> Pengaturan Aplikasi</button>
+  </nav>
+
+  <div class="mt-auto p-5">
+    <div class="rounded-xl p-4 border border-white/10" style="background:#ffffff06">
+      <div class="text-[10px] font-bold text-emerald-100/70">TAHUN AJARAN</div>
+      <div id="sidebarYear" class="text-sm font-bold mt-1">2026/2027</div>
+      <div id="sidebarSemester" class="text-[10px] mt-1" style="color:var(--gold)">Semester 1 · Ganjil</div>
+    </div>
+    <div class="text-[9px] text-emerald-100/30 mt-5 text-center">SANTRIEDU © <span id="copyrightYear"></span></div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main-content flex-1 min-w-0">
+  <header class="topbar bg-white border-b border-gray-200/70 px-5 md:px-8 py-4 flex items-center justify-between gap-3 sticky top-0 z-40">
+    <div class="flex items-center gap-3 min-w-0">
+      <button id="mobileMenuBtn" class="mobile-menu btn-light w-10 h-10 items-center justify-center flex-shrink-0">☰</button>
+      <div class="min-w-0">
+        <div id="breadcrumb" class="text-[10px] text-gray-400 mb-1">AKADEMIK / DASHBOARD</div>
+        <h1 id="topTitle" class="font-bold text-base md:text-lg truncate">Dashboard Akademik</h1>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 flex-shrink-0">
+      <div class="hidden sm:block text-right mr-2">
+        <div id="headerDate" class="text-[11px] font-bold"></div>
+        <div id="headerSemester" class="text-[10px] text-gray-400 mt-1">Semester 1</div>
+      </div>
+      <button id="headerAddBtn" class="btn-primary flex items-center gap-2"><span>＋</span><span class="hide-mobile">Tambah Siswa</span></button>
+    </div>
+  </header>
+
+  <div class="content-pad p-5 md:p-8 max-w-[1600px] mx-auto">
+
+    <!-- DASHBOARD -->
+    <section id="page-dashboard" class="page active">
+      <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-7">
+        <div>
+          <div class="text-xs font-bold tracking-[2px] uppercase mb-2" style="color:#9c8144">Academic Overview</div>
+          <h2 class="section-title text-2xl md:text-3xl">Selamat datang, Bapak Ahmad 👋</h2>
+          <p class="text-xs text-gray-500 mt-2">Pantau kehadiran dan perkembangan akademik siswa dalam satu tempat.</p>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+          <select id="dashSemester" class="field !w-auto min-w-[140px]">
+            <option value="1">Semester 1 · Ganjil</option>
+            <option value="2">Semester 2 · Genap</option>
+          </select>
+          <select id="dashClass" class="field !w-auto min-w-[120px]"><option value="">Semua Kelas</option></select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4 mb-6">
+        <div class="card stat-card" style="color:#285b44">
+          <div class="flex items-center justify-between"><span class="text-[10px] font-bold text-gray-500">TOTAL SISWA</span><span class="text-lg">♙</span></div>
+          <div id="statStudents" class="stat-number text-3xl font-extrabold mt-3">0</div>
+          <div class="text-[10px] text-gray-400 mt-2">Siswa terdaftar</div>
+        </div>
+        <div class="card stat-card" style="color:#25804e">
+          <div class="flex items-center justify-between"><span class="text-[10px] font-bold text-gray-500">HADIR HARI INI</span><span class="text-lg">✓</span></div>
+          <div id="statPresent" class="stat-number text-3xl font-extrabold mt-3">0</div>
+          <div id="statPresentSub" class="text-[10px] text-gray-400 mt-2">0% dari siswa</div>
+        </div>
+        <div class="card stat-card" style="color:#b08029">
+          <div class="flex items-center justify-between"><span class="text-[10px] font-bold text-gray-500">TOTAL SAKIT</span><span class="text-lg">✚</span></div>
+          <div id="statSick" class="stat-number text-3xl font-extrabold mt-3">0</div>
+          <div class="text-[10px] text-gray-400 mt-2">Catatan hari ini</div>
+        </div>
+        <div class="card stat-card" style="color:#b64b43">
+          <div class="flex items-center justify-between"><span class="text-[10px] font-bold text-gray-500">TOTAL ALPA</span><span class="text-lg">!</span></div>
+          <div id="statAbsent" class="stat-number text-3xl font-extrabold mt-3">0</div>
+          <div class="text-[10px] text-gray-400 mt-2">Catatan hari ini</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-5 mb-6">
+        <div class="card p-5 md:p-6 xl:col-span-2">
+          <div class="flex items-start justify-between gap-3 mb-5">
+            <div><h3 class="font-bold text-sm">Ringkasan Kehadiran</h3><p class="text-[10px] text-gray-400 mt-1">Akumulasi semester terpilih</p></div>
+            <span class="text-xl">◉</span>
+          </div>
+          <div id="attendanceOverview" class="space-y-5"></div>
+        </div>
+        <div class="card p-5 md:p-6">
+          <h3 class="font-bold text-sm">Rata-rata Nilai Siswa</h3>
+          <p class="text-[10px] text-gray-400 mt-1 mb-5">Berdasarkan nilai yang sudah diinput</p>
+          <div class="flex items-end gap-2">
+            <span id="dashGradeAverage" class="text-4xl font-extrabold" style="color:#285b44">0</span>
+            <span class="text-xs text-gray-400 mb-1">/ 100</span>
+          </div>
+          <div class="progress mt-4"><div id="dashGradeBar" style="width:0%;background:#2e7653"></div></div>
+          <div class="mt-5 p-3 rounded-xl" style="background:#f5f7f2">
+            <div class="text-[10px] text-gray-500">Jumlah siswa sudah memiliki nilai</div>
+            <div id="dashGradedCount" class="text-sm font-extrabold mt-1">0 siswa</div>
+          </div>
+          <button class="btn-light w-full mt-4" data-go="grades">Buka Nilai Akademik →</button>
+        </div>
+      </div>
+
+      <div class="card overflow-hidden mb-6">
+        <div class="p-5 flex items-center justify-between gap-3">
+          <div><h3 class="font-bold text-sm">Aktivitas Absensi Hari Ini</h3><p class="text-[10px] text-gray-400 mt-1" id="todaySubtitle"></p></div>
+          <button class="btn-light" data-go="attendance">Input Absensi →</button>
+        </div>
+        <div id="dashTodayTable"></div>
+      </div>
+
+      <div class="card p-5 md:p-6">
+        <div class="flex justify-between items-center gap-3 mb-4">
+          <div><h3 class="font-bold text-sm">Perkembangan Akademik</h3><p class="text-[10px] text-gray-400 mt-1">Lima siswa dengan rata-rata nilai tertinggi</p></div>
+          <button class="btn-light" data-go="grades">Lihat Nilai</button>
+        </div>
+        <div id="dashTopStudents"></div>
+      </div>
+    </section>
+
+    <!-- ABSENSI -->
+    <section id="page-attendance" class="page">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+        <div>
+          <div class="text-xs font-bold tracking-[2px] uppercase mb-2" style="color:#9c8144">Attendance Management</div>
+          <h2 class="section-title">Input Absensi</h2>
+          <p class="text-xs text-gray-500 mt-2">Pilih status kehadiran setiap siswa. Data tersimpan otomatis.</p>
+        </div>
+        <button id="saveAttendanceBtn" class="btn-primary">✓ Simpan Absensi</button>
+      </div>
+
+      <div class="card p-4 md:p-5 mb-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div><label class="label">Tanggal Absensi</label><input type="date" id="attendanceDate" class="field"></div>
+          <div><label class="label">Kelas</label><select id="attendanceClass" class="field"><option value="">Semua Kelas</option></select></div>
+          <div><label class="label">Cari Nama Siswa</label><input id="attendanceSearch" class="field" placeholder="Ketik nama siswa..."></div>
+          <div><label class="label">Filter Status</label><select id="attendanceFilter" class="field"><option value="">Semua Status</option><option>Hadir</option><option>Sakit</option><option>Izin</option><option>Alpa</option><option value="belum">Belum Diisi</option></select></div>
+        </div>
+        <div class="flex flex-wrap items-center justify-between gap-3 mt-5 pt-4 border-t border-gray-100">
+          <div class="text-xs text-gray-500">Tanggal aktif: <strong id="attendanceDateLabel">-</strong></div>
+          <div class="flex gap-2 flex-wrap">
+            <button id="allPresentBtn" class="btn-light">✓ Tandai Semua Hadir</button>
+            <button id="resetAttendanceBtn" class="btn-light !text-red-600">↺ Reset Tanggal</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+        <div class="card p-4 flex items-center gap-3"><div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:#e2f5e9;color:#237446">✓</div><div><div class="text-[10px] text-gray-400">HADIR</div><div id="attCountHadir" class="text-xl font-extrabold">0</div></div></div>
+        <div class="card p-4 flex items-center gap-3"><div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:#fff0d8;color:#9a6417">✚</div><div><div class="text-[10px] text-gray-400">SAKIT</div><div id="attCountSakit" class="text-xl font-extrabold">0</div></div></div>
+        <div class="card p-4 flex items-center gap-3"><div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:#e4edff;color:#315caa">✎</div><div><div class="text-[10px] text-gray-400">IZIN</div><div id="attCountIzin" class="text-xl font-extrabold">0</div></div></div>
+        <div class="card p-4 flex items-center gap-3"><div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:#ffe6e4;color:#b3423d">!</div><div><div class="text-[10px] text-gray-400">ALPA</div><div id="attCountAlpa" class="text-xl font-extrabold">0</div></div></div>
+      </div>
+
+      <div id="attendanceCards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+      <div id="attendanceEmpty" class="card empty-state hidden">Belum ada siswa. Tambahkan siswa terlebih dahulu.</div>
+    </section>
+
+    <!-- SISWA -->
+    <section id="page-students" class="page">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+        <div><div class="text-xs font-bold tracking-[2px] uppercase mb-2" style="color:#9c8144">Student Directory</div><h2 class="section-title">Daftar Siswa</h2><p class="text-xs text-gray-500 mt-2">Kelola data siswa dan kelas dengan mudah.</p></div>
+        <button id="addStudentBtn" class="btn-primary">＋ Tambah Siswa</button>
+      </div>
+      <div class="card p-4 mb-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <input id="studentSearch" class="field" placeholder="⌕ Cari nama atau NIS...">
+          <select id="studentClassFilter" class="field"><option value="">Semua Kelas</option></select>
+          <div class="flex gap-2"><button id="importStudentsBtn" class="btn-light flex-1">↑ Import Data</button><button id="exportStudentsBtn" class="btn-light flex-1">↓ Export Data</button></div>
+        </div>
+      </div>
+      <div class="flex items-center justify-between mb-4"><span id="studentCountLabel" class="text-xs text-gray-500">0 siswa</span><button id="printStudentsBtn" class="btn-light">▤ Cetak Daftar</button></div>
+      <div id="studentsGrid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+      <div id="studentsEmpty" class="card empty-state hidden">Data siswa belum tersedia.</div>
+    </section>
+
+    <!-- NILAI -->
+    <section id="page-grades" class="page">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+        <div><div class="text-xs font-bold tracking-[2px] uppercase mb-2" style="color:#9c8144">Academic Assessment</div><h2 class="section-title">Nilai Akademik</h2><p class="text-xs text-gray-500 mt-2">Kelola NH 1–4, PTS, PAS, dan rata-rata secara otomatis.</p></div>
+        <div class="flex gap-2 flex-wrap"><button id="importGradesBtn" class="btn-light">↑ Import Nilai</button><button id="exportGradesBtn" class="btn-primary">↓ Export Nilai</button></div>
+      </div>
+
+      <div class="card p-4 md:p-5 mb-5">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div><label class="label">Semester</label><select id="gradeSemester" class="field"><option value="1">Semester 1 · Ganjil</option><option value="2">Semester 2 · Genap</option></select></div>
+          <div><label class="label">Kelas</label><select id="gradeClass" class="field"><option value="">Semua Kelas</option></select></div>
+          <div><label class="label">Cari Siswa</label><input id="gradeSearch" class="field" placeholder="Ketik nama siswa..."></div>
+        </div>
+        <div class="flex flex-wrap justify-between items-center gap-3 mt-5 pt-4 border-t border-gray-100">
+          <div class="text-[11px] text-gray-500">Rentang nilai 0–100. Kolom kosong tidak dihitung dalam rata-rata.</div>
+          <button id="saveGradesBtn" class="btn-primary">✓ Simpan Nilai</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+        <div class="card p-4"><div class="text-[10px] text-gray-400 font-bold">RATA-RATA KELAS</div><div id="gradeStatAvg" class="text-2xl font-extrabold mt-2">0</div></div>
+        <div class="card p-4"><div class="text-[10px] text-gray-400 font-bold">NILAI TERTINGGI</div><div id="gradeStatMax" class="text-2xl font-extrabold mt-2">0</div></div>
+        <div class="card p-4"><div class="text-[10px] text-gray-400 font-bold">NILAI TERENDAH</div><div id="gradeStatMin" class="text-2xl font-extrabold mt-2">0</div></div>
+        <div class="card p-4"><div class="text-[10px] text-gray-400 font-bold">SUDAH DINILAI</div><div id="gradeStatCount" class="text-2xl font-extrabold mt-2">0</div></div>
+      </div>
+
+      <div class="card overflow-hidden">
+        <div class="p-5 border-b border-gray-100"><h3 class="font-bold text-sm">Input Nilai Siswa</h3><p class="text-[10px] text-gray-400 mt-1">Perubahan nilai disimpan otomatis.</p></div>
+        <div id="gradesTable" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <!-- LAPORAN -->
+    <section id="page-reports" class="page">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+        <div><div class="text-xs font-bold tracking-[2px] uppercase mb-2" style="color:#9c8144">Reports & Analytics</div><h2 class="section-title">Rekap & Laporan</h2><p class="text-xs text-gray-500 mt-2">Laporan absensi dan nilai per siswa, kelas, dan periode.</p></div>
+        <div class="flex gap-2 flex-wrap">
+          <button id="reportExcelBtn" class="btn-light">↓ Excel</button>
+          <button id="reportPdfBtn" class="btn-primary">▤ Cetak / PDF</button>
+          <button id="reportJpgBtn" class="btn-light">▧ Simpan JPG</button>
+        </div>
+      </div>
+
+      <div class="card p-4 md:p-5 mb-5 no-print">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div><label class="label">Jenis Rekap</label><select id="reportType" class="field"><option value="attendance">Rekap Absensi</option><option value="grades">Rekap Nilai</option><option value="combined">Absensi & Nilai</option></select></div>
+          <div><label class="label">Kelas</label><select id="reportClass" class="field"><option value="">Semua Kelas</option></select></div>
+          <div><label class="label">Semester</label><select id="reportSemester" class="field"><option value="1">Semester 1 · Ganjil</option><option value="2">Semester 2 · Genap</option></select></div>
+          <div><label class="label">Periode Absensi</label><select id="reportPeriod" class="field"><option value="monthly">Bulanan</option><option value="daily">Harian</option><option value="semester">Semester</option><option value="all">Semua Data</option></select></div>
+          <div><label class="label">Tanggal</label><input id="reportDate" type="date" class="field"></div>
+          <div><label class="label">Bulan</label><input id="reportMonth" type="month" class="field"></div>
+          <div class="sm:col-span-2"><label class="label">Cari Nama Siswa</label><input id="reportSearch" class="field" placeholder="Opsional: cari nama siswa..."></div>
+        </div>
+        <div class="flex flex-wrap justify-between gap-3 mt-4 pt-4 border-t border-gray-100">
+          <button id="refreshReportBtn" class="btn-light">↻ Perbarui Laporan</button>
+          <div class="text-[10px] text-gray-400 self-center">Laporan mengikuti filter yang dipilih.</div>
+        </div>
+      </div>
+
+      <div id="reportCapture" class="card overflow-hidden">
+        <div class="p-5 md:p-7 border-b border-gray-100">
+          <div class="flex items-start gap-4">
+            <div class="w-14 h-14 rounded-xl bg-white border border-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0"><img id="reportLogo" class="w-full h-full object-contain hidden" alt="Logo"><span id="reportLogoFallback" class="text-2xl">🎓</span></div>
+            <div class="min-w-0 flex-1"><div class="text-[10px] uppercase tracking-[1.8px] text-gray-400 font-bold">Laporan Akademik Sekolah</div><h2 id="reportHeading" class="serif text-xl md:text-2xl font-bold mt-1">Rekap Absensi Siswa</h2><p id="reportMeta" class="text-[10px] text-gray-500 mt-2">Semester 1 · Tahun Ajaran 2026/2027</p></div>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
+            <div class="rounded-xl p-3" style="background:#f4f7f1"><div class="text-[9px] text-gray-500">JUMLAH SISWA</div><div id="reportStatStudents" class="text-xl font-extrabold mt-1">0</div></div>
+            <div class="rounded-xl p-3" style="background:#e2f5e9"><div class="text-[9px] text-gray-500">HADIR</div><div id="reportStatHadir" class="text-xl font-extrabold mt-1">0</div></div>
+            <div class="rounded-xl p-3" style="background:#fff0d8"><div class="text-[9px] text-gray-500">SAKIT + IZIN</div><div id="reportStatSI" class="text-xl font-extrabold mt-1">0</div></div>
+            <div class="rounded-xl p-3" style="background:#ffe6e4"><div class="text-[9px] text-gray-500">ALPA</div><div id="reportStatAlpa" class="text-xl font-extrabold mt-1">0</div></div>
+          </div>
+        </div>
+        <div id="reportTable" class="table-wrap"></div>
+        <div class="p-5 md:p-7 border-t border-gray-100">
+          <div class="flex flex-col sm:flex-row justify-between gap-8 mt-3">
+            <div class="text-[10px] text-gray-500"><p>Mengetahui,</p><p class="font-bold text-gray-700 mt-1">Kepala Sekolah</p><div class="h-14"></div><div class="font-bold">________________________</div></div>
+            <div class="text-[10px] text-gray-500 sm:text-right"><p id="reportSignatureDate"></p><p class="font-bold text-gray-700 mt-1">Guru Mata Pelajaran</p><div class="h-14"></div><div class="font-bold">Ahmad Mahdi, SE</div></div>
+          </div>
+          <p class="text-[9px] text-gray-400 mt-7">Dokumen dihasilkan melalui SantriEdu · Absensi & Nilai Siswa.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PENGATURAN -->
+    <section id="page-settings" class="page">
+      <div class="mb-6"><div class="text-xs font-bold tracking-[2px] uppercase mb-2" style="color:#9c8144">Application Settings</div><h2 class="section-title">Pengaturan Aplikasi</h2><p class="text-xs text-gray-500 mt-2">Atur identitas sekolah, semester, dan pencadangan data.</p></div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+        <div class="card p-5 md:p-6">
+          <h3 class="font-bold text-sm mb-1">Identitas Sekolah</h3><p class="text-[10px] text-gray-400 mb-5">Informasi ini digunakan pada dashboard dan laporan.</p>
+          <form id="settingsForm" class="space-y-4">
+            <div><label class="label">Nama Sekolah</label><input id="schoolName" class="field" placeholder="Nama sekolah"></div>
+            <div><label class="label">Nama Guru</label><input id="teacherName" class="field" placeholder="Nama guru"></div>
+            <div><label class="label">NIP / Identitas Guru (opsional)</label><input id="teacherId" class="field" placeholder="Nomor identitas guru"></div>
+            <div><label class="label">Tahun Ajaran</label><input id="schoolYear" class="field" placeholder="2026/2027"></div>
+            <div><label class="label">Semester Aktif</label><select id="schoolSemester" class="field"><option value="1">Semester 1 · Ganjil</option><option value="2">Semester 2 · Genap</option></select></div>
+            <div><label class="label">Logo Sekolah</label><div class="flex gap-3 items-center"><div class="w-16 h-16 rounded-xl border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0"><img id="settingsLogo" class="w-full h-full object-contain hidden" alt="Logo sekolah"><span id="settingsLogoFallback">🏫</span></div><div class="flex-1"><input id="logoUpload" type="file" accept="image/*" class="field"><p class="text-[10px] text-gray-400 mt-2">PNG atau JPG. Logo disimpan di browser ini.</p></div></div></div>
+            <button class="btn-primary w-full" type="submit">✓ Simpan Pengaturan</button>
+          </form>
+        </div>
+
+        <div class="space-y-5">
+          <div class="card p-5 md:p-6">
+            <h3 class="font-bold text-sm mb-1">Pencadangan Data</h3><p class="text-[10px] text-gray-400 mb-5">Simpan seluruh data untuk dipindahkan atau dipulihkan nanti.</p>
+            <div class="space-y-3">
+              <button id="backupBtn" class="btn-primary w-full text-left">↓ Unduh Backup Lengkap (JSON)</button>
+              <button id="restoreBtn" class="btn-light w-full text-left">↑ Pulihkan Backup (JSON)</button>
+              <button id="exportAllExcelBtn" class="btn-light w-full text-left">▦ Export Semua Data (Excel)</button>
+              <button id="importAllExcelBtn" class="btn-light w-full text-left">↑ Import Data (Excel / CSV)</button>
+              <button id="printAllBtn" class="btn-light w-full text-left">▤ Cetak Laporan / Simpan PDF</button>
+            </div>
+            <div class="rounded-xl p-4 mt-5" style="background:#f5f7f2"><div class="font-bold text-xs">Status Penyimpanan</div><div id="storageStatus" class="text-[10px] text-gray-500 mt-2">Data tersimpan di browser.</div><div id="storageSize" class="text-[10px] text-gray-400 mt-1"></div></div>
+          </div>
+
+          <div class="card p-5 md:p-6">
+            <h3 class="font-bold text-sm mb-1">Tentang Aplikasi</h3><p class="text-[10px] text-gray-400 mb-4">SantriEdu · Sistem administrasi akademik sederhana.</p>
+            <div class="space-y-3 text-xs">
+              <div class="flex justify-between gap-3"><span class="text-gray-500">Pengembang / Pengelola</span><strong>Ahmad Mahdi, SE</strong></div>
+              <div class="flex justify-between gap-3"><span class="text-gray-500">Versi</span><strong>1.0.0</strong></div>
+              <div class="flex justify-between gap-3"><span class="text-gray-500">Penyimpanan</span><strong>Browser lokal</strong></div>
+              <div class="flex justify-between gap-3"><span class="text-gray-500">Mode</span><strong>Offline setelah aset dimuat</strong></div>
+            </div>
+            <div class="text-[10px] text-gray-400 leading-relaxed mt-5 pt-4 border-t border-gray-100">Penting: data tersimpan pada browser dan perangkat yang digunakan. Ekspor backup secara berkala agar data tidak hilang saat browser dibersihkan atau perangkat berganti. Aplikasi ini tidak mengirim data ke server.</div>
+          </div>
+
+          <div class="card p-5 md:p-6">
+            <h3 class="font-bold text-sm mb-2 text-red-600">Zona Berbahaya</h3><p class="text-[10px] text-gray-400 mb-4">Gunakan hanya jika benar-benar diperlukan.</p>
+            <button id="clearAllBtn" class="w-full rounded-xl border border-red-200 bg-red-50 text-red-600 p-3 text-xs font-bold">Hapus Semua Data Aplikasi</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+</div>
+
+<!-- MODAL SISWA -->
+<div id="studentModal" class="modal-backdrop">
+  <div class="modal-box">
+    <div class="flex items-start justify-between gap-3 mb-6">
+      <div><h3 id="studentModalTitle" class="serif text-xl font-bold">Tambah Siswa</h3><p class="text-[10px] text-gray-400 mt-1">Lengkapi identitas siswa.</p></div>
+      <button class="btn-light" data-close="studentModal">✕</button>
+    </div>
+    <form id="studentForm" class="space-y-4">
+      <input id="studentEditId" type="hidden">
+      <div><label class="label">Nama Lengkap *</label><input id="studentName" class="field" required maxlength="100" placeholder="Nama lengkap siswa"></div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div><label class="label">NIS / Nomor Induk</label><input id="studentNis" class="field" maxlength="40" placeholder="Nomor induk siswa"></div>
+        <div><label class="label">Kelas *</label><input id="studentClass" class="field" required maxlength="30" placeholder="Contoh: VII A" list="classOptions"></div>
+      </div>
+      <datalist id="classOptions"><option value="VII A"><option value="VII B"><option value="VIII A"><option value="VIII B"><option value="IX A"><option value="IX B"></datalist>
+      <div><label class="label">Jenis Kelamin</label><select id="studentGender" class="field"><option value="">Tidak ditentukan</option><option value="L">Laki-laki</option><option value="P">Perempuan</option></select></div>
+      <div class="flex gap-2 pt-3"><button type="button" class="btn-light flex-1" data-close="studentModal">Batal</button><button type="submit" class="btn-primary flex-1">✓ Simpan Siswa</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL KONFIRMASI -->
+<div id="confirmModal" class="modal-backdrop">
+  <div class="modal-box !max-w-sm text-center">
+    <div class="w-14 h-14 rounded-full bg-red-50 text-red-600 text-2xl flex items-center justify-center mx-auto mb-4">!</div>
+    <h3 id="confirmTitle" class="serif text-xl font-bold">Konfirmasi</h3>
+    <p id="confirmMessage" class="text-xs text-gray-500 mt-3 leading-relaxed"></p>
+    <div class="flex gap-2 mt-6"><button id="confirmCancel" class="btn-light flex-1">Batal</button><button id="confirmProceed" class="btn-primary flex-1 !bg-red-600">Ya, Lanjutkan</button></div>
+  </div>
+</div>
+
+<input id="importFile" type="file" accept=".xlsx,.xls,.csv,.json" class="hidden">
+<input id="restoreFile" type="file" accept=".json" class="hidden">
+<input id="logoFile" type="file" accept="image/*" class="hidden">
+<div id="toastContainer"></div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   SANTRIEDU — APLIKASI ABSENSI DAN NILAI SISWA
+   Data tersimpan secara lokal pada browser.
+   ========================================================= */
+
+const $ = id => document.getElementById(id);
+const TODAY = localDateISO(new Date());
+
+function localDateISO(d){
+  const date = new Date(d.getTime() - d.getTimezoneOffset()*60000);
+  return date.toISOString().slice(0,10);
+}
+function escapeHTML(value){
+  return String(value ?? "").replace(/[&<>"']/g,c=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[c]);
+}
+function makeId(){
+  return "s_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,8);
+}
+function average(values){
+  const valid = values.filter(v=>v!==null && v!==undefined && v!=="" && Number.isFinite(Number(v)));
+  return valid.length ? valid.reduce((a,b)=>a+Number(b),0)/valid.length : null;
+}
+function fmtNumber(v){
+  return v===null || v===undefined || !Number.isFinite(Number(v)) ? "—" : Number(v).toLocaleString("id-ID",{maximumFractionDigits:2});
+}
+function fmtDate(s){
+  if(!s)return "—";
+  const d=new Date(s+"T00:00:00");
+  return Number.isNaN(d.getTime())?s:d.toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"});
+}
+function monthOf(s){return String(s||"").slice(0,7)}
+function semesterName(s){return String(s)==="2"?"Semester 2 · Genap":"Semester 1 · Ganjil"}
+function initials(name){
+  return String(name||"?").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();
+}
+function toast(message,type="success"){
+  const el=document.createElement("div");
+  el.className="toast";
+  if(type==="error")el.style.background="#a93232";
+  el.textContent=(type==="success"?"✓  ":type==="error"?"⚠  ":"ℹ  ")+message;
+  $("toastContainer").appendChild(el);
+  setTimeout(()=>el.remove(),3500);
+}
+function showModal(id){$(id).classList.add("open")}
+function closeModal(id){$(id).classList.remove("open")}
+
+const DEFAULT_SETTINGS={
+  schoolName:"SMP Segar",
+  teacherName:"Ahmad Mahdi, SE",
+  teacherId:"",
+  schoolYear:"2026/2027",
+  semester:"1",
+  logo:""
+};
+
+let db={
+  version:1,
+  students:[],
+  attendance:[],
+  grades:{},
+  settings:{...DEFAULT_SETTINGS}
+};
+let pendingConfirm=null;
+let currentPage="dashboard";
+let saveTimer=null;
+let dirtyGrades=new Set();
+
+function loadDB(){
+  try{
+    const raw=localStorage.getItem("santriedu_db_v1");
+    if(raw){
+      const data=JSON.parse(raw);
+      db={
+        version:1,
+        students:Array.isArray(data.students)?data.students:[],
+        attendance:Array.isArray(data.attendance)?data.attendance:[],
+        grades:data.grades&&typeof data.grades==="object"?data.grades:{},
+        settings:{...DEFAULT_SETTINGS,...(data.settings||{})}
+      };
+      db.students=db.students.map(s=>({
+        id:String(s.id||makeId()),
+        name:String(s.name||""),
+        nis:String(s.nis||""),
+        kelas:String(s.kelas||s.class||""),
+        gender:String(s.gender||"")
+      }));
+      db.attendance=db.attendance.filter(a=>a&&a.studentId&&a.date&&["Hadir","Sakit","Izin","Alpa"].includes(a.status));
+    }
+  }catch(e){
+    console.error("Gagal membaca data lokal",e);
+    toast("Data lokal tidak dapat dibaca. Periksa backup Anda.","error");
+  }
+}
+function persist(silent=false){
+  try{
+    localStorage.setItem("santriedu_db_v1",JSON.stringify(db));
+    updateStorageInfo();
+    if(!silent)toast("Data berhasil disimpan.");
+    return true;
+  }catch(e){
+    console.error(e);
+    toast("Penyimpanan penuh. Ekspor backup dan kurangi ukuran logo.","error");
+    return false;
+  }
+}
+function schedulePersist(){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>persist(true),350);
+}
+function updateStorageInfo(){
+  try{
+    const raw=localStorage.getItem("santriedu_db_v1")||"";
+    $("storageSize").textContent="Ukuran data: "+(raw.length/1024).toFixed(1)+" KB";
+    $("storageStatus").textContent="Data lokal tersimpan · "+new Date().toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"});
+  }catch(e){}
+}
+function currentSemester(){return String(db.settings.semester||"1")}
+function gradeKey(studentId,semester){return studentId+"_"+String(semester)}
+function getGrade(studentId,semester){
+  const key=gradeKey(studentId,semester);
+  if(!db.grades[key])db.grades[key]={studentId,semester:String(semester),nh1:null,nh2:null,nh3:null,nh4:null,pts:null,pas:null};
+  return db.grades[key];
+}
+function getStudent(id){return db.students.find(s=>s.id===id)}
+function getStudentAttendance(id,semester){
+  return db.attendance.filter(a=>a.studentId===id&&semesterContains(a.date,semester));
+}
+function semesterContains(date,semester){
+  if(!date)return false;
+  const month=Number(date.slice(5,7));
+  return String(semester)==="2" ? month>=1&&month<=6 : month>=7&&month<=12;
+}
+function getStatsForStudent(id,period="all",reference=TODAY){
+  let rows=db.attendance.filter(a=>a.studentId===id);
+  if(period==="daily")rows=rows.filter(a=>a.date===reference);
+  else if(period==="monthly")rows=rows.filter(a=>monthOf(a.date)===reference.slice(0,7));
+  else if(period==="semester")rows=rows.filter(a=>semesterContains(a.date,reference));
+  const result={Hadir:0,Sakit:0,Izin:0,Alpa:0,total:rows.length};
+  rows.forEach(a=>result[a.status]++);
+  result.percent=result.total?result.Hadir/result.total*100:0;
+  return result;
+}
+function getDateAttendance(id,date){
+  return db.attendance.find(a=>a.studentId===id&&a.date===date);
+}
+function setAttendance(id,date,status){
+  const i=db.attendance.findIndex(a=>a.studentId===id&&a.date===date);
+  if(i>=0){
+    if(status===null)db.attendance.splice(i,1);
+    else db.attendance[i].status=status;
+  }else if(status!==null){
+    db.attendance.push({studentId:id,date,status});
+  }
+  schedulePersist();
+}
+function gradeAverage(g){
+  return average([g.nh1,g.nh2,g.nh3,g.nh4,g.pts,g.pas]);
+}
+function gradeValues(g){
+  return ["nh1","nh2","nh3","nh4","pts","pas"].map(k=>g[k]);
+}
+function getAllClasses(){
+  return [...new Set(db.students.map(s=>s.kelas.trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"id",{numeric:true}));
+}
+function fillClassSelect(id,includeAll=true){
+  const el=$(id);
+  if(!el)return;
+  const previous=el.value;
+  el.innerHTML=(includeAll?'<option value="">Semua Kelas</option>':'')+
+    getAllClasses().map(c=>`<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join("");
+  if([...el.options].some(o=>o.value===previous))el.value=previous;
+}
+function filteredStudents(classValue="",search=""){
+  const q=String(search||"").trim().toLowerCase();
+  return db.students.filter(s=>
+    (!classValue||s.kelas===classValue)&&
+    (!q||s.name.toLowerCase().includes(q)||s.nis.toLowerCase().includes(q))
+  ).sort((a,b)=>a.name.localeCompare(b.name,"id"));
+}
+function allStatusesForDate(date){
+  const result={Hadir:0,Sakit:0,Izin:0,Alpa:0,belum:0};
+  db.students.forEach(s=>{
+    const a=getDateAttendance(s.id,date);
+    if(a)result[a.status]++;
+    else result.belum++;
+  });
+  return result;
+}
+function statusBadge(status){
+  return status?`<span class="badge badge-${escapeHTML(status)}">${escapeHTML(status)}</span>`:'<span class="badge badge-belum">Belum Diisi</span>';
+}
+function exportBlob(blob,filename){
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;a.download=filename;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+function safeFilename(s){
+  return String(s||"santriedu").replace(/[^a-z0-9_-]+/gi,"_").slice(0,70);
+}
+function downloadJSON(obj,filename){
+  exportBlob(new Blob([JSON.stringify(obj,null,2)],{type:"application/json;charset=utf-8"}),filename);
+}
+function requireXLSX(){
+  if(!window.XLSX){toast("Library Excel belum tersedia. Periksa koneksi internet.","error");return false}
+  return true;
+}
+function rowsToExcel(rows,filename,sheetName="Data"){
+  if(!requireXLSX())return;
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,sheetName.slice(0,31));
+  XLSX.writeFile(wb,filename);
+}
+function getLogoSrc(){
+  return db.settings.logo||"";
+}
+function syncLogo(){
+  ["sidebarLogo","reportLogo","settingsLogo"].forEach(id=>{
+    const img=$(id);
+    if(db.settings.logo){
+      img.src=db.settings.logo;img.classList.remove("hidden");
+    }else{
+      img.removeAttribute("src");img.classList.add("hidden");
+    }
+  });
+  ["sidebarLogoFallback","reportLogoFallback","settingsLogoFallback"].forEach(id=>{
+    const el=$(id);if(el)el.classList.toggle("hidden",!!db.settings.logo);
+  });
+}
+function syncSettings(){
+  $("schoolName").value=db.settings.schoolName;
+  $("teacherName").value=db.settings.teacherName;
+  $("teacherId").value=db.settings.teacherId||"";
+  $("schoolYear").value=db.settings.schoolYear;
+  $("schoolSemester").value=currentSemester();
+  $("sidebarYear").textContent=db.settings.schoolYear;
+  $("sidebarSemester").textContent=semesterName(currentSemester());
+  $("headerSemester").textContent=semesterName(currentSemester());
+  syncLogo();
+}
+function renderAll(){
+  fillClassSelect("dashClass");
+  fillClassSelect("attendanceClass");
+  fillClassSelect("studentClassFilter");
+  fillClassSelect("gradeClass");
+  fillClassSelect("reportClass");
+  renderDashboard();
+  renderAttendance();
+  renderStudents();
+  renderGrades();
+  renderReport();
+  syncSettings();
+  updateStorageInfo();
+}
+function renderDashboard(){
+  const sem=$("dashSemester").value||currentSemester();
+  const cls=$("dashClass").value;
+  const students=filteredStudents(cls,"");
+  const today=allStatusesForDate(TODAY);
+  $("statStudents").textContent=students.length;
+  $("statPresent").textContent=students.filter(s=>getDateAttendance(s.id,TODAY)?.status==="Hadir").length;
+  $("statPresentSub").textContent=(students.length?Math.round(Number($("statPresent").textContent)/students.length*100):0)+"% dari siswa";
+  $("statSick").textContent=students.filter(s=>getDateAttendance(s.id,TODAY)?.status==="Sakit").length;
+  $("statAbsent").textContent=students.filter(s=>getDateAttendance(s.id,TODAY)?.status==="Alpa").length;
+  $("todaySubtitle").textContent=fmtDate(TODAY)+" · "+students.length+" siswa";
+
+  const attendanceRows=db.attendance.filter(a=>semesterContains(a.date,sem)&&!!getStudent(a.studentId)&&(!cls||getStudent(a.studentId).kelas===cls));
+  const counts={Hadir:0,Sakit:0,Izin:0,Alpa:0};
+  attendanceRows.forEach(a=>counts[a.status]++);
+  const total=Object.values(counts).reduce((a,b)=>a+b,0);
+  const colors={Hadir:"#2d8b58",Sakit:"#d49a37",Izin:"#4b78ca",Alpa:"#cf5b53"};
+  $("attendanceOverview").innerHTML=Object.keys(counts).map(k=>`
+    <div>
+      <div class="flex justify-between items-center mb-2"><span class="text-xs font-semibold">${k}</span><span class="text-xs font-bold">${counts[k]} <span class="text-gray-400 font-normal">(${total?(counts[k]/total*100).toFixed(1):"0.0"}%)</span></span></div>
+      <div class="progress"><div style="width:${total?counts[k]/total*100:0}%;background:${colors[k]}"></div></div>
+    </div>`).join("")+
+    `<div class="text-[10px] text-gray-400 pt-2">Jumlah catatan absensi: ${total}. Data mengikuti tanggal yang sudah diinput.</div>`;
+
+  const gradeList=students.map(s=>({s,g:getGrade(s.id,sem)})).map(x=>({...x,avg:gradeAverage(x.g)})).filter(x=>x.avg!==null);
+  const avg=average(gradeList.map(x=>x.avg));
+  $("dashGradeAverage").textContent=fmtNumber(avg===null?0:avg);
+  $("dashGradeBar").style.width=Math.min(100,avg||0)+"%";
+  $("dashGradedCount").textContent=gradeList.length+" dari "+students.length+" siswa";
+
+  const todayRows=students.slice(0,8).map(s=>{
+    const a=getDateAttendance(s.id,TODAY);
+    return `<tr><td><div class="flex items-center gap-2"><div class="avatar !w-8 !h-8 !rounded-lg">${escapeHTML(initials(s.name))}</div><span class="font-semibold">${escapeHTML(s.name)}</span></div></td><td>${escapeHTML(s.kelas)}</td><td>${statusBadge(a?.status)}</td></tr>`;
+  }).join("");
+  $("dashTodayTable").innerHTML=students.length?`<div class="table-wrap"><table><thead><tr><th>Nama Siswa</th><th>Kelas</th><th>Status Hari Ini</th></tr></thead><tbody>${todayRows}</tbody></table></div>`:'<div class="empty-state">Belum ada siswa terdaftar.</div>';
+
+  gradeList.sort((a,b)=>b.avg-a.avg);
+  $("dashTopStudents").innerHTML=gradeList.length?`<div class="table-wrap"><table><thead><tr><th>Peringkat</th><th>Nama Siswa</th><th>Kelas</th><th>Rata-rata</th></tr></thead><tbody>${gradeList.slice(0,5).map((x,i)=>`<tr><td><span class="font-bold" style="color:${i===0?"#b38b38":"#6b7b72"}">#${i+1}</span></td><td class="font-semibold">${escapeHTML(x.s.name)}</td><td>${escapeHTML(x.s.kelas)}</td><td class="font-extrabold">${fmtNumber(x.avg)}</td></tr>`).join("")}</tbody></table></div>`:'<div class="empty-state">Nilai belum diinput.</div>';
+}
+function renderAttendance(){
+  const date=$("attendanceDate").value||TODAY;
+  $("attendanceDateLabel").textContent=fmtDate(date);
+  const students=filteredStudents($("attendanceClass").value,$("attendanceSearch").value);
+  const filter=$("attendanceFilter").value;
+  const count={Hadir:0,Sakit:0,Izin:0,Alpa:0};
+  db.attendance.filter(a=>a.date===date).forEach(a=>{if(count[a.status]!==undefined)count[a.status]++});
+  Object.keys(count).forEach(k=>$("attCount"+k).textContent=count[k]);
+  const list=students.filter(s=>{
+    const a=getDateAttendance(s.id,date);
+    return !filter||(filter==="belum"?!a:a?.status===filter);
+  });
+  $("attendanceCards").innerHTML=list.map(s=>{
+    const a=getDateAttendance(s.id,date);
+    const stats=getStatsForStudent(s.id,"all");
+    return `<article class="student-card" data-student-card="${escapeHTML(s.id)}">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="avatar">${escapeHTML(initials(s.name))}</div>
+        <div class="flex-1 min-w-0"><div class="font-bold text-sm truncate">${escapeHTML(s.name)}</div><div class="text-[10px] text-gray-400 mt-1">${escapeHTML(s.kelas)}${s.nis?" · NIS "+escapeHTML(s.nis):""}</div></div>
+        ${statusBadge(a?.status)}
+      </div>
+      <div class="grid grid-cols-4 gap-1.5 mb-4">
+        ${["Hadir","Sakit","Izin","Alpa"].map(k=>`<button type="button" data-status="${k}" data-id="${escapeHTML(s.id)}" class="status-btn status-${k} ${a?.status===k?"selected":""}">${k}</button>`).join("")}
+      </div>
+      <div class="pt-3 border-t border-gray-100 flex justify-between items-center gap-2">
+        <div class="text-[10px] text-gray-400">Rekap total: <strong class="text-gray-700">${stats.total} hari</strong> · Hadir <strong class="text-green-700">${stats.percent.toFixed(0)}%</strong></div>
+        <button data-clear-status="${escapeHTML(s.id)}" class="text-[10px] font-bold text-gray-400 hover:text-red-600">Hapus status</button>
+      </div>
+    </article>`;
+  }).join("");
+  $("attendanceEmpty").classList.toggle("hidden",list.length>0);
+}
+function renderStudents(){
+  const list=filteredStudents($("studentClassFilter").value,$("studentSearch").value);
+  $("studentCountLabel").textContent=list.length+" siswa ditampilkan · "+db.students.length+" terdaftar";
+  $("studentsGrid").innerHTML=list.map(s=>{
+    const st=getStatsForStudent(s.id,"all");
+    return `<article class="student-card">
+      <div class="flex items-start gap-3">
+        <div class="avatar !w-12 !h-12">${escapeHTML(initials(s.name))}</div>
+        <div class="flex-1 min-w-0"><div class="font-bold text-sm break-words">${escapeHTML(s.name)}</div><div class="text-[10px] text-gray-400 mt-1">${escapeHTML(s.kelas)}${s.nis?" · "+escapeHTML(s.nis):""}</div><div class="text-[10px] text-gray-400 mt-1">${s.gender==="L"?"Laki-laki":s.gender==="P"?"Perempuan":"Jenis kelamin belum diisi"}</div></div>
+        <button data-edit-student="${escapeHTML(s.id)}" class="btn-light !p-2" title="Edit siswa">✎</button>
+      </div>
+      <div class="grid grid-cols-4 gap-1.5 mt-5 pt-4 border-t border-gray-100 text-center">
+        ${[["H",st.Hadir,"#237446"],["S",st.Sakit,"#9a6417"],["I",st.Izin,"#315caa"],["A",st.Alpa,"#b3423d"]].map(x=>`<div><div class="text-[9px] font-bold" style="color:${x[2]}">${x[0]}</div><div class="text-sm font-extrabold mt-1">${x[1]}</div></div>`).join("")}
+      </div>
+      <div class="flex justify-between items-center mt-4"><div class="text-[10px] text-gray-400">Kehadiran <strong class="text-green-700">${st.percent.toFixed(1)}%</strong></div><div class="flex gap-2"><button data-edit-student="${escapeHTML(s.id)}" class="text-[10px] font-bold text-gray-500">Edit</button><button data-delete-student="${escapeHTML(s.id)}" class="text-[10px] font-bold text-red-500">Hapus</button></div></div>
+    </article>`;
+  }).join("");
+  $("studentsEmpty").classList.toggle("hidden",list.length>0);
+}
+function renderGrades(){
+  const sem=$("gradeSemester").value||currentSemester();
+  const cls=$("gradeClass").value;
+  const students=filteredStudents(cls,$("gradeSearch").value);
+  const all=students.map(s=>({s,g:getGrade(s.id,sem)}));
+  const avgs=all.map(x=>gradeAverage(x.g)).filter(x=>x!==null);
+  $("gradeStatAvg").textContent=fmtNumber(average(avgs)||0);
+  $("gradeStatMax").textContent=fmtNumber(avgs.length?Math.max(...avgs):0);
+  $("gradeStatMin").textContent=fmtNumber(avgs.length?Math.min(...avgs):0);
+  $("gradeStatCount").textContent=avgs.length+"/"+students.length;
+  const keys=["nh1","nh2","nh3","nh4","pts","pas"];
+  const labels=["NH 1","NH 2","NH 3","NH 4","PTS","PAS"];
+  $("gradesTable").innerHTML=students.length?`<table><thead><tr><th>Nama Siswa</th><th>Kelas</th>${labels.map(x=>`<th>${x}</th>`).join("")}<th>Rata-rata</th><th>Status</th></tr></thead><tbody>${all.map(({s,g})=>{
+    const avg=gradeAverage(g);
+    return `<tr data-grade-row="${escapeHTML(s.id)}"><td class="font-semibold">${escapeHTML(s.name)}${s.nis?`<div class="text-[9px] text-gray-400 mt-1">${escapeHTML(s.nis)}</div>`:""}</td><td>${escapeHTML(s.kelas)}</td>${keys.map((k,i)=>`<td><input aria-label="${labels[i]} ${escapeHTML(s.name)}" data-grade-input="${k}" data-id="${escapeHTML(s.id)}" class="field !w-[76px] !px-2 !py-2 text-center" type="number" min="0" max="100" step="0.01" value="${g[k]===null||g[k]===undefined?"":escapeHTML(g[k])}" placeholder="—"></td>`).join("")}<td data-grade-average="${escapeHTML(s.id)}" class="font-extrabold">${fmtNumber(avg)}</td><td data-grade-status="${escapeHTML(s.id)}">${avg===null?'<span class="badge badge-belum">Belum Dinilai</span>':avg>=75?'<span class="badge badge-Hadir">Tuntas</span>':'<span class="badge badge-Alpa">Perlu Bimbingan</span>'}</td></tr>`;
+  }).join("")}</tbody></table>`:'<div class="empty-state">Belum ada siswa pada filter ini.</div>';
+}
+function getReportStudents(){
+  return filteredStudents($("reportClass").value,$("reportSearch").value);
+}
+function reportAttendanceRows(student,period,reference,sem){
+  let rows=db.attendance.filter(a=>a.studentId===student.id);
+  if(period==="daily")rows=rows.filter(a=>a.date===reference);
+  else if(period==="monthly")rows=rows.filter(a=>monthOf(a.date)===reference.slice(0,7));
+  else if(period==="semester")rows=rows.filter(a=>semesterContains(a.date,sem));
+  return rows;
+}
+function renderReport(){
+  const type=$("reportType").value;
+  const period=$("reportPeriod").value;
+  const sem=$("reportSemester").value||currentSemester();
+  const reference=period==="monthly"?($("reportMonth").value||TODAY.slice(0,7)):($("reportDate").value||TODAY);
+  const students=getReportStudents();
+  const title=type==="grades"?"Rekap Nilai Siswa":type==="combined"?"Rekap Absensi dan Nilai":"Rekap Absensi Siswa";
+  $("reportHeading").textContent=title;
+  $("reportMeta").textContent=db.settings.schoolName+" · "+semesterName(sem)+" · Tahun Ajaran "+db.settings.schoolYear+" · Periode "+(period==="daily"?"Harian":period==="monthly"?"Bulanan":period==="semester"?"Semester":"Semua Data")+(period==="monthly"?" "+reference:"");
+  $("reportSignatureDate").textContent="Tanggal cetak: "+fmtDate(TODAY);
+  let totals={Hadir:0,Sakit:0,Izin:0,Alpa:0};
+  let sessionDates=new Set();
+  students.forEach(s=>reportAttendanceRows(s,period,reference,sem).forEach(a=>{totals[a.status]++;sessionDates.add(a.date)}));
+  $("reportStatStudents").textContent=students.length;
+  $("reportStatHadir").textContent=totals.Hadir;
+  $("reportStatSI").textContent=totals.Sakit+totals.Izin;
+  $("reportStatAlpa").textContent=totals.Alpa;
+
+  let html="";
+  if(type==="attendance"){
+    html=`<table><thead><tr><th>No.</th><th>Nama Siswa</th><th>Kelas</th><th>Hadir</th><th>Sakit</th><th>Izin</th><th>Alpa</th><th>Total Catatan</th><th>Kehadiran</th></tr></thead><tbody>`;
+    html+=students.map((s,i)=>{
+      const rows=reportAttendanceRows(s,period,reference,sem);
+      const st={Hadir:0,Sakit:0,Izin:0,Alpa:0};rows.forEach(a=>st[a.status]++);
+      const pct=rows.length?st.Hadir/rows.length*100:0;
+      return `<tr><td>${i+1}</td><td class="font-semibold">${escapeHTML(s.name)}</td><td>${escapeHTML(s.kelas)}</td><td>${st.Hadir}</td><td>${st.Sakit}</td><td>${st.Izin}</td><td>${st.Alpa}</td><td>${rows.length}</td><td>${rows.length?pct.toFixed(1)+"%":"—"}</td></tr>`;
+    }).join("");
+    html+=`</tbody><tfoot><tr style="background:#f5f7f2;font-weight:800"><td colspan="3">TOTAL</td><td>${totals.Hadir}</td><td>${totals.Sakit}</td><td>${totals.Izin}</td><td>${totals.Alpa}</td><td>${Object.values(totals).reduce((a,b)=>a+b,0)}</td><td>—</td></tr></tfoot></table>`;
+  }else if(type==="grades"){
+    html=`<table><thead><tr><th>No.</th><th>Nama Siswa</th><th>Kelas</th><th>NH 1</th><th>NH 2</th><th>NH 3</th><th>NH 4</th><th>PTS</th><th>PAS</th><th>Rata-rata</th><th>Keterangan</th></tr></thead><tbody>`;
+    html+=students.map((s,i)=>{
+      const g=getGrade(s.id,sem),avg=gradeAverage(g);
+      return `<tr><td>${i+1}</td><td class="font-semibold">${escapeHTML(s.name)}</td><td>${escapeHTML(s.kelas)}</td>${gradeValues(g).map(v=>`<td>${fmtNumber(v)}</td>`).join("")}<td class="font-extrabold">${fmtNumber(avg)}</td><td>${avg===null?"Belum Dinilai":avg>=75?"Tuntas":"Perlu Bimbingan"}</td></tr>`;
+    }).join("")+"</tbody></table>";
+  }else{
+    html=`<table><thead><tr><th>No.</th><th>Nama Siswa</th><th>Kelas</th><th>H</th><th>S</th><th>I</th><th>A</th><th>% Hadir</th><th>NH 1</th><th>NH 2</th><th>NH 3</th><th>NH 4</th><th>PTS</th><th>PAS</th><th>Rata-rata</th></tr></thead><tbody>`;
+    html+=students.map((s,i)=>{
+      const rows=reportAttendanceRows(s,period,reference,sem),st={Hadir:0,Sakit:0,Izin:0,Alpa:0};
+      rows.forEach(a=>st[a.status]++);
+      const pct=rows.length?st.Hadir/rows.length*100:null;
+      const g=getGrade(s.id,sem),avg=gradeAverage(g);
+      return `<tr><td>${i+1}</td><td class="font-semibold">${escapeHTML(s.name)}</td><td>${escapeHTML(s.kelas)}</td><td>${st.Hadir}</td><td>${st.Sakit}</td><td>${st.Izin}</td><td>${st.Alpa}</td><td>${pct===null?"—":pct.toFixed(1)+"%"}</td>${gradeValues(g).map(v=>`<td>${fmtNumber(v)}</td>`).join("")}<td class="font-extrabold">${fmtNumber(avg)}</td></tr>`;
+    }).join("")+"</tbody></table>";
+  }
+  $("reportTable").innerHTML=students.length?html:'<div class="empty-state">Tidak ada data siswa yang sesuai dengan filter.</div>';
+}
+function navigate(page){
+  if(!$( "page-"+page))return;
+  currentPage=page;
+  document.querySelectorAll(".page").forEach(el=>el.classList.toggle("active",el.id==="page-"+page));
+  document.querySelectorAll(".nav-btn[data-page]").forEach(el=>el.classList.toggle("active",el.dataset.page===page));
+  const titles={dashboard:"Dashboard Akademik",attendance:"Input Absensi",students:"Daftar Siswa",grades:"Nilai Akademik",reports:"Rekap & Laporan",settings:"Pengaturan Aplikasi"};
+  $("topTitle").textContent=titles[page]||"SantriEdu";
+  $("breadcrumb").textContent="AKADEMIK / "+(titles[page]||page).toUpperCase();
+  $("sidebar").classList.remove("open");
+  if(page==="reports")renderReport();
+  if(page==="grades")renderGrades();
+  if(page==="dashboard")renderDashboard();
+  if(page==="attendance")renderAttendance();
+}
+function openStudentModal(id=null){
+  $("studentForm").reset();
+  $("studentEditId").value=id||"";
+  $("studentModalTitle").textContent=id?"Edit Data Siswa":"Tambah Siswa";
+  if(id){
+    const s=getStudent(id);if(!s)return;
+    $("studentName").value=s.name;
+    $("studentNis").value=s.nis;
+    $("studentClass").value=s.kelas;
+    $("studentGender").value=s.gender;
+  }
+  showModal("studentModal");
+  setTimeout(()=>$("studentName").focus(),100);
+}
+function deleteStudent(id){
+  const s=getStudent(id);if(!s)return;
+  askConfirm("Hapus Siswa",`Hapus data ${s.name}? Seluruh absensi dan nilai siswa ini juga akan dihapus.`,()=>{
+    db.students=db.students.filter(x=>x.id!==id);
+    db.attendance=db.attendance.filter(a=>a.studentId!==id);
+    Object.keys(db.grades).forEach(k=>{if(db.grades[k]?.studentId===id)delete db.grades[k]});
+    persist(true);renderAll();toast("Data siswa dan catatannya dihapus.");
+  });
+}
+function askConfirm(title,message,action){
+  $("confirmTitle").textContent=title;
+  $("confirmMessage").textContent=message;
+  pendingConfirm=action;
+  showModal("confirmModal");
+}
+function getStudentExportRows(){
+  return db.students.map(s=>({
+    NIS:s.nis,Nama:s.name,Kelas:s.kelas,JenisKelamin:s.gender
+  }));
+}
+function getAttendanceExportRows(){
+  return db.attendance.map(a=>{
+    const s=getStudent(a.studentId);
+    return {Tanggal:a.date,NIS:s?.nis||"",Nama:s?.name||"",Kelas:s?.kelas||"",Status:a.status};
+  }).sort((a,b)=>a.Tanggal.localeCompare(b.Tanggal)||a.Nama.localeCompare(b.Nama));
+}
+function getGradesExportRows(sem){
+  return db.students.map(s=>{
+    const g=getGrade(s.id,sem);
+    return {NIS:s.nis,Nama:s.name,Kelas:s.kelas,Semester:String(sem),"NH 1":g.nh1??"","NH 2":g.nh2??"","NH 3":g.nh3??"","NH 4":g.nh4??"",PTS:g.pts??"",PAS:g.pas??"","Rata-rata":gradeAverage(g)??""};
+  });
+}
+function exportGrades(){
+  rowsToExcel(getGradesExportRows($("gradeSemester").value),"Nilai_Siswa_Semester_"+$("gradeSemester").value+".xlsx","Nilai Siswa");
+}
+function exportStudents(){
+  rowsToExcel(getStudentExportRows(),"Daftar_Siswa.xlsx","Daftar Siswa");
+}
+function exportAllExcel(){
+  if(!requireXLSX())return;
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(getStudentExportRows()),"Siswa");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(getAttendanceExportRows()),"Absensi");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(getGradesExportRows("1")),"Nilai Semester 1");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(getGradesExportRows("2")),"Nilai Semester 2");
+  XLSX.writeFile(wb,"Backup_SantriEdu.xlsx");
+}
+function exportReportExcel(){
+  const type=$("reportType").value;
+  const rows=[];
+  const sem=$("reportSemester").value,period=$("reportPeriod").value;
+  const ref=period==="monthly"?($("reportMonth").value||TODAY.slice(0,7)):($("reportDate").value||TODAY);
+  getReportStudents().forEach(s=>{
+    const att=reportAttendanceRows(s,period,ref,sem);
+    const counts={Hadir:0,Sakit:0,Izin:0,Alpa:0};
+    att.forEach(a=>counts[a.status]++);
+    const g=getGrade(s.id,sem);
+    const gradeObj={"NH 1":g.nh1??"","NH 2":g.nh2??"","NH 3":g.nh3??"","NH 4":g.nh4??"",PTS:g.pts??"",PAS:g.pas??"","Rata-rata":gradeAverage(g)??""};
+    const base={Nama:s.name,NIS:s.nis,Kelas:s.kelas};
+    if(type==="attendance"||type==="combined")Object.assign(base,counts,{"Total Catatan":att.length,"Persentase Hadir":att.length?+(counts.Hadir/att.length*100).toFixed(2):""});
+    if(type==="grades"||type==="combined")Object.assign(base,gradeObj);
+    rows.push(base);
+  });
+  rowsToExcel(rows,"Rekap_"+type+"_"+safeFilename(ref)+".xlsx","Rekap");
+}
+function backupAll(){
+  downloadJSON({app:"SantriEdu",version:1,exportedAt:new Date().toISOString(),...db},"Backup_SantriEdu_"+TODAY+".json");
+}
+function normalizeHeader(v){
+  return String(v||"").trim().toLowerCase().replace(/[\s_.-]+/g,"").replace(/[^a-z0-9]/g,"");
+}
+function rowValue(row,aliases){
+  const keys=Object.keys(row);
+  for(const alias of aliases){
+    const key=keys.find(k=>normalizeHeader(k)===normalizeHeader(alias));
+    if(key!==undefined)return row[key];
+  }
+  return "";
+}
+function importStudentsFromRows(rows){
+  let added=0,updated=0,skipped=0;
+  rows.forEach(row=>{
+    const name=String(rowValue(row,["Nama","Nama Siswa","Nama Lengkap","Name"])||"").trim();
+    const kelas=String(rowValue(row,["Kelas","Class","Rombel"])||"").trim();
+    const nis=String(rowValue(row,["NIS","NISN","Nomor Induk","ID Siswa"])||"").trim();
+    const gender=String(rowValue(row,["Jenis Kelamin","Gender","JK"])||"").trim().toUpperCase();
+    if(!name||!kelas){skipped++;return}
+    const existing=nis?db.students.find(s=>s.nis===nis):db.students.find(s=>s.name.toLowerCase()===name.toLowerCase()&&s.kelas.toLowerCase()===kelas.toLowerCase());
+    if(existing){
+      existing.name=name;existing.kelas=kelas;existing.nis=nis||existing.nis;
+      existing.gender=["L","P"].includes(gender)?gender:existing.gender;
+      updated++;
+    }else{
+      db.students.push({id:makeId(),name,kelas,nis,gender:["L","P"].includes(gender)?gender:""});
+      added++;
+    }
+  });
+  return {added,updated,skipped};
+}
+function importGradesFromRows(rows,sem){
+  let updated=0,skipped=0;
+  rows.forEach(row=>{
+    const name=String(rowValue(row,["Nama","Nama Siswa","Nama Lengkap","Name"])||"").trim();
+    const nis=String(rowValue(row,["NIS","NISN","Nomor Induk"])||"").trim();
+    const kelas=String(rowValue(row,["Kelas","Class"])||"").trim();
+    const s=nis?db.students.find(x=>x.nis===nis):db.students.find(x=>x.name.toLowerCase()===name.toLowerCase()&&(!kelas||x.kelas.toLowerCase()===kelas.toLowerCase()));
+    if(!s){skipped++;return}
+    const g=getGrade(s.id,sem);
+    const aliases={nh1:["NH 1","NH1","Nilai Harian 1"],nh2:["NH 2","NH2","Nilai Harian 2"],nh3:["NH 3","NH3","Nilai Harian 3"],nh4:["NH 4","NH4","Nilai Harian 4"],pts:["PTS","UTS"],pas:["PAS","UAS"]};
+    for(const [k,arr] of Object.entries(aliases)){
+      const raw=rowValue(row,arr);
+      if(raw!==""&&raw!==null&&raw!==undefined){
+        const n=Number(raw);
+        if(Number.isFinite(n)&&n>=0&&n<=100)g[k]=n;
+      }
+    }
+    updated++;
+  });
+  return {updated,skipped};
+}
+function importAttendanceFromRows(rows){
+  let updated=0,skipped=0;
+  rows.forEach(row=>{
+    const dateRaw=rowValue(row,["Tanggal","Date"]);
+    const date=normalizeImportDate(dateRaw);
+    const name=String(rowValue(row,["Nama","Nama Siswa","Nama Lengkap","Name"])||"").trim();
+    const nis=String(rowValue(row,["NIS","NISN","Nomor Induk"])||"").trim();
+    const kelas=String(rowValue(row,["Kelas","Class"])||"").trim();
+    const status=normalizeStatus(rowValue(row,["Status","Kehadiran","Absensi"]));
+    if(!date||!status){skipped++;return}
+    let s=nis?db.students.find(x=>x.nis===nis):null;
+    if(!s&&name)s=db.students.find(x=>x.name.toLowerCase()===name.toLowerCase()&&(!kelas||x.kelas.toLowerCase()===kelas.toLowerCase()));
+    if(!s){skipped++;return}
+    setAttendance(s.id,date,status);updated++;
+  });
+  return {updated,skipped};
+}
+function normalizeStatus(v){
+  const x=String(v||"").trim().toLowerCase();
+  if(["hadir","h","present"].includes(x))return "Hadir";
+  if(["sakit","s"].includes(x))return "Sakit";
+  if(["izin","ijin","i"].includes(x))return "Izin";
+  if(["alpa","alpha","a","absen"].includes(x))return "Alpa";
+  return "";
+}
+function normalizeImportDate(v){
+  if(!v)return "";
+  if(v instanceof Date&&!Number.isNaN(v.getTime()))return localDateISO(v);
+  if(typeof v==="number"&&window.XLSX){
+    const d=XLSX.SSF.parse_date_code(v);
+    if(d)return `${d.y}-${String(d.m).padStart(2,"0")}-${String(d.d).padStart(2,"0")}`;
+  }
+  const s=String(v).trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
+  let m=s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+  if(m)return `${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`;
+  const d=new Date(s);
+  return Number.isNaN(d.getTime())?"":localDateISO(d);
+}
+function importExcelFile(file){
+  const ext=file.name.split(".").pop().toLowerCase();
+  if(ext==="json"){
+    const reader=new FileReader();
+    reader.onload=()=>{
+      try{
+        const obj=JSON.parse(reader.result);
+        if(obj.app==="SantriEdu"||Array.isArray(obj.students)){
+          askConfirm("Pulihkan Backup", "Memulihkan backup akan mengganti data siswa, absensi, nilai, dan pengaturan saat ini. Pastikan Anda sudah mengekspor backup terbaru.",()=>{
+            db={
+              version:1,
+              students:Array.isArray(obj.students)?obj.students:[],
+              attendance:Array.isArray(obj.attendance)?obj.attendance:[],
+              grades:obj.grades&&typeof obj.grades==="object"?obj.grades:{},
+              settings:{...DEFAULT_SETTINGS,...(obj.settings||{})}
+            };
+            persist(true);renderAll();toast("Backup berhasil dipulihkan.");
+          });
+        }else toast("Format JSON tidak dikenali.","error");
+      }catch(e){toast("File JSON tidak valid.","error")}
+    };
+    reader.readAsText(file);return;
+  }
+  if(!requireXLSX())return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const wb=XLSX.read(reader.result,{type:"array",cellDates:true});
+      if(!wb.SheetNames.length)throw new Error("Tidak ada sheet");
+      const first=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(first,{defval:""});
+      if(!rows.length){toast("File tidak memiliki baris data.","error");return}
+      const keys=Object.keys(rows[0]).map(normalizeHeader);
+      const hasStatus=keys.some(k=>["status","kehadiran","absensi"].includes(k));
+      const hasGrade=keys.some(k=>["nh1","nh2","nh3","nh4","pts","pas"].includes(k));
+      const hasName=keys.some(k=>["nama","namasiswa","namalengkap","name"].includes(k));
+      if(!hasName){toast("Kolom Nama tidak ditemukan.","error");return}
+      let result;
+      if(hasStatus&&keys.some(k=>["tanggal","date"].includes(k))){
+        result=importAttendanceFromRows(rows);
+        persist(true);renderAll();
+        toast(`Absensi diimpor: ${result.updated} catatan, ${result.skipped} dilewati.`);
+      }else if(hasGrade){
+        const match=wb.SheetNames.join(" ").match(/semester\s*([12])/i);
+        const sem=match?match[1]:currentSemester();
+        result=importGradesFromRows(rows,sem);
+        persist(true);renderAll();
+        toast(`Nilai diperbarui: ${result.updated} siswa, ${result.skipped} dilewati.`);
+      }else{
+        result=importStudentsFromRows(rows);
+        persist(true);renderAll();
+        toast(`Siswa ditambahkan ${result.added}, diperbarui ${result.updated}, dilewati ${result.skipped}.`);
+      }
+    }catch(e){console.error(e);toast("Gagal membaca file. Periksa format dan judul kolom.","error")}
+  };
+  reader.readAsArrayBuffer(file);
+}
+async function exportReportJPG(){
+  if(!window.html2canvas){toast("Library gambar belum tersedia. Periksa koneksi internet.","error");return}
+  try{
+    const canvas=await html2canvas($("reportCapture"),{scale:2,backgroundColor:"#ffffff",useCORS:true,logging:false});
+    canvas.toBlob(blob=>{if(blob)exportBlob(blob,"Rekap_SantriEdu_"+TODAY+".jpg");else toast("Gagal membuat gambar.","error")},"image/jpeg",.94);
+  }catch(e){console.error(e);toast("Gagal membuat gambar laporan.","error")}
+}
+function printReport(){
+  renderReport();
+  window.print();
+}
+
+/* NAVIGASI */
+document.querySelectorAll(".nav-btn[data-page]").forEach(btn=>btn.addEventListener("click",()=>navigate(btn.dataset.page)));
+document.querySelectorAll("[data-go]").forEach(btn=>btn.addEventListener("click",()=>navigate(btn.dataset.go)));
+$("mobileMenuBtn").addEventListener("click",()=>$("sidebar").classList.toggle("open"));
+document.addEventListener("click",e=>{
+  if(window.innerWidth<=900&&!e.target.closest("#sidebar")&&!e.target.closest("#mobileMenuBtn"))$("sidebar").classList.remove("open");
+});
+$("headerAddBtn").addEventListener("click",()=>openStudentModal());
+$("addStudentBtn").addEventListener("click",()=>openStudentModal());
+
+/* TANGGAL DAN DASHBOARD */
+$("headerDate").textContent=new Date().toLocaleDateString("id-ID",{weekday:"short",day:"numeric",month:"short",year:"numeric"});
+$("copyrightYear").textContent=new Date().getFullYear();
+$("attendanceDate").value=TODAY;
+$("reportDate").value=TODAY;
+$("reportMonth").value=TODAY.slice(0,7);
+$("dashSemester").value=currentSemester();
+$("gradeSemester").value=currentSemester();
+$("reportSemester").value=currentSemester();
+
+$("dashSemester").addEventListener("change",renderDashboard);
+$("dashClass").addEventListener("change",renderDashboard);
+
+/* INPUT ABSENSI */
+$("attendanceDate").addEventListener("change",renderAttendance);
+$("attendanceClass").addEventListener("change",renderAttendance);
+$("attendanceSearch").addEventListener("input",renderAttendance);
+$("attendanceFilter").addEventListener("change",renderAttendance);
+
+$("attendanceCards").addEventListener("click",e=>{
+  const btn=e.target.closest("[data-status]");
+  if(btn){
+    const id=btn.dataset.id,status=btn.dataset.status;
+    setAttendance(id,$("attendanceDate").value||TODAY,status);
+    renderAttendance();renderDashboard();renderStudents();
+    return;
+  }
+  const clear=e.target.closest("[data-clear-status]");
+  if(clear){
+    setAttendance(clear.dataset.clearStatus,$("attendanceDate").value||TODAY,null);
+    renderAttendance();renderDashboard();renderStudents();
+  }
+});
+$("allPresentBtn").addEventListener("click",()=>{
+  const date=$("attendanceDate").value||TODAY;
+  const students=filteredStudents($("attendanceClass").value,$("attendanceSearch").value);
+  if(!students.length){toast("Tidak ada siswa untuk diproses.","error");return}
+  askConfirm("Tandai Semua Hadir",`Tetapkan status Hadir untuk ${students.length} siswa pada ${fmtDate(date)}? Status yang sudah ada akan diperbarui.`,()=>{
+    students.forEach(s=>setAttendance(s.id,date,"Hadir"));
+    persist(true);renderAttendance();renderDashboard();renderStudents();
+    toast("Status Hadir berhasil diterapkan.");
+  });
+});
+$("resetAttendanceBtn").addEventListener("click",()=>{
+  const date=$("attendanceDate").value||TODAY;
+  askConfirm("Reset Absensi Tanggal",`Hapus seluruh catatan absensi pada ${fmtDate(date)}? Data tanggal lain tidak berubah.`,()=>{
+    db.attendance=db.attendance.filter(a=>a.date!==date);
+    persist(true);renderAttendance();renderDashboard();renderStudents();renderReport();
+    toast("Absensi pada tanggal tersebut telah direset.");
+  });
+});
+$("saveAttendanceBtn").addEventListener("click",()=>{
+  persist(true);renderAttendance();renderDashboard();
+  toast("Absensi tersimpan di browser.");
+});
+
+/* CRUD SISWA */
+$("studentForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const id=$("studentEditId").value;
+  const name=$("studentName").value.trim();
+  const nis=$("studentNis").value.trim();
+  const kelas=$("studentClass").value.trim();
+  const gender=$("studentGender").value;
+  if(!name||!kelas){toast("Nama dan kelas wajib diisi.","error");return}
+  if(nis&&db.students.some(s=>s.nis===nis&&s.id!==id)){
+    toast("NIS tersebut sudah digunakan siswa lain.","error");return;
+  }
+  if(id){
+    const s=getStudent(id);
+    if(!s)return;
+    Object.assign(s,{name,nis,kelas,gender});
+  }else{
+    db.students.push({id:makeId(),name,nis,kelas,gender});
+  }
+  persist(true);closeModal("studentModal");renderAll();
+  toast(id?"Data siswa berhasil diperbarui.":"Siswa berhasil ditambahkan.");
+});
+$("studentsGrid").addEventListener("click",e=>{
+  const edit=e.target.closest("[data-edit-student]");
+  const del=e.target.closest("[data-delete-student]");
+  if(edit)openStudentModal(edit.dataset.editStudent);
+  if(del)deleteStudent(del.dataset.deleteStudent);
+});
+$("studentSearch").addEventListener("input",renderStudents);
+$("studentClassFilter").addEventListener("change",renderStudents);
+$("exportStudentsBtn").addEventListener("click",exportStudents);
+$("importStudentsBtn").addEventListener("click",()=>$("importFile").click());
+$("printStudentsBtn").addEventListener("click",()=>{
+  navigate("students");window.print();
+});
+
+/* NILAI AKADEMIK */
+$("gradeSemester").addEventListener("change",()=>{dirtyGrades.clear();renderGrades()});
+$("gradeClass").addEventListener("change",renderGrades);
+$("gradeSearch").addEventListener("input",renderGrades);
+
+function updateGradeRow(id){
+  const row=document.querySelector(`[data-grade-row="${CSS.escape(id)}"]`);
+  if(!row)return;
+  const g=getGrade(id,$("gradeSemester").value);
+  const avg=gradeAverage(g);
+  const av=row.querySelector("[data-grade-average]");
+  const st=row.querySelector("[data-grade-status]");
+  if(av)av.textContent=fmtNumber(avg);
+  if(st)st.innerHTML=avg===null?'<span class="badge badge-belum">Belum Dinilai</span>':avg>=75?'<span class="badge badge-Hadir">Tuntas</span>':'<span class="badge badge-Alpa">Perlu Bimbingan</span>';
+  const inputs=row.querySelectorAll("[data-grade-input]");
+  inputs.forEach(input=>{
+    const n=Number(input.value);
+    input.classList.toggle("!border-red-400",input.value!==""&&(!Number.isFinite(n)||n<0||n>100));
+  });
+  updateGradeStatsLive();
+}
+function updateGradeStatsLive(){
+  const sem=$("gradeSemester").value;
+  const students=filteredStudents($("gradeClass").value,$("gradeSearch").value);
+  const avgs=students.map(s=>gradeAverage(getGrade(s.id,sem))).filter(v=>v!==null);
+  $("gradeStatAvg").textContent=fmtNumber(average(avgs)||0);
+  $("gradeStatMax").textContent=fmtNumber(avgs.length?Math.max(...avgs):0);
+  $("gradeStatMin").textContent=fmtNumber(avgs.length?Math.min(...avgs):0);
+  $("gradeStatCount").textContent=avgs.length+"/"+students.length;
+}
+$("gradesTable").addEventListener("input",e=>{
+  const input=e.target.closest("[data-grade-input]");
+  if(!input)return;
+  const id=input.dataset.id,key=input.dataset.gradeInput;
+  const raw=input.value;
+  if(raw===""){
+    getGrade(id,$("gradeSemester").value)[key]=null;
+  }else{
+    const n=Number(raw);
+    if(!Number.isFinite(n)||n<0||n>100){
+      input.classList.add("!border-red-400");
+      return;
+    }
+    input.classList.remove("!border-red-400");
+    getGrade(id,$("gradeSemester").value)[key]=n;
+  }
+  dirtyGrades.add(id);
+  updateGradeRow(id);
+  schedulePersist();
+});
+$("saveGradesBtn").addEventListener("click",()=>{
+  const invalid=[...document.querySelectorAll("[data-grade-input]")].some(i=>i.value!==""&&(!Number.isFinite(Number(i.value))||Number(i.value)<0||Number(i.value)>100));
+  if(invalid){toast("Ada nilai yang tidak valid. Gunakan rentang 0–100.","error");return}
+  persist(true);dirtyGrades.clear();renderGrades();renderDashboard();
+  toast("Nilai berhasil disimpan.");
+});
+$("exportGradesBtn").addEventListener("click",exportGrades);
+$("importGradesBtn").addEventListener("click",()=>$("importFile").click());
+
+/* LAPORAN */
+["reportType","reportClass","reportSemester","reportPeriod","reportDate","reportMonth"].forEach(id=>$(id).addEventListener("change",renderReport));
+$("reportSearch").addEventListener("input",renderReport);
+$("refreshReportBtn").addEventListener("click",()=>{renderReport();toast("Laporan diperbarui.")});
+$("reportExcelBtn").addEventListener("click",exportReportExcel);
+$("reportPdfBtn").addEventListener("click",printReport);
+$("reportJpgBtn").addEventListener("click",exportReportJPG);
+
+/* PENGATURAN */
+$("settingsForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  db.settings.schoolName=$("schoolName").value.trim()||"Sekolah";
+  db.settings.teacherName=$("teacherName").value.trim()||"Ahmad Mahdi, SE";
+  db.settings.teacherId=$("teacherId").value.trim();
+  db.settings.schoolYear=$("schoolYear").value.trim()||"2026/2027";
+  db.settings.semester=$("schoolSemester").value;
+  persist(true);syncSettings();renderAll();
+  $("dashSemester").value=currentSemester();
+  $("gradeSemester").value=currentSemester();
+  $("reportSemester").value=currentSemester();
+  toast("Pengaturan berhasil disimpan.");
+});
+$("logoUpload").addEventListener("change",e=>{
+  const file=e.target.files?.[0];if(!file)return;
+  if(!file.type.startsWith("image/")){toast("Pilih file gambar.","error");return}
+  if(file.size>2*1024*1024){toast("Ukuran logo maksimal 2 MB.","error");return}
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const img=new Image();
+    img.onload=()=>{
+      const canvas=document.createElement("canvas");
+      const scale=Math.min(1,500/Math.max(img.width,img.height));
+      canvas.width=Math.max(1,Math.round(img.width*scale));
+      canvas.height=Math.max(1,Math.round(img.height*scale));
+      canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);
+      db.settings.logo=canvas.toDataURL("image/jpeg",.85);
+      if(!persist(true)){db.settings.logo="";return}
+      syncLogo();toast("Logo sekolah berhasil diperbarui.");
+    };
+    img.onerror=()=>toast("Gambar tidak dapat dibaca.","error");
+    img.src=reader.result;
+  };
+  reader.readAsDataURL(file);
+  e.target.value="";
+});
+$("backupBtn").addEventListener("click",backupAll);
+$("restoreBtn").addEventListener("click",()=>$("restoreFile").click());
+$("restoreFile").addEventListener("change",e=>{
+  const file=e.target.files?.[0];if(file)importExcelFile(file);
+  e.target.value="";
+});
+$("exportAllExcelBtn").addEventListener("click",exportAllExcel);
+$("importAllExcelBtn").addEventListener("click",()=>$("importFile").click());
+$("printAllBtn").addEventListener("click",()=>{navigate("reports");printReport()});
+$("clearAllBtn").addEventListener("click",()=>{
+  askConfirm("Hapus Semua Data", "Tindakan ini menghapus semua siswa, absensi, nilai, dan logo dari penyimpanan browser. Unduh backup sebelum melanjutkan.",()=>{
+    db={version:1,students:[],attendance:[],grades:{},settings:{...DEFAULT_SETTINGS}};
+    persist(true);renderAll();toast("Semua data aplikasi telah dihapus.");
+  });
+});
+
+/* IMPOR FILE */
+$("importFile").addEventListener("change",e=>{
+  const file=e.target.files?.[0];if(file)importExcelFile(file);
+  e.target.value="";
+});
+
+/* MODAL DAN KONFIRMASI */
+document.querySelectorAll("[data-close]").forEach(btn=>btn.addEventListener("click",()=>closeModal(btn.dataset.close)));
+document.querySelectorAll(".modal-backdrop").forEach(backdrop=>{
+  backdrop.addEventListener("click",e=>{if(e.target===backdrop)closeModal(backdrop.id)});
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape")document.querySelectorAll(".modal-backdrop.open").forEach(el=>closeModal(el.id));
+});
+$("confirmCancel").addEventListener("click",()=>{pendingConfirm=null;closeModal("confirmModal")});
+$("confirmProceed").addEventListener("click",()=>{
+  const action=pendingConfirm;pendingConfirm=null;closeModal("confirmModal");
+  if(typeof action==="function")action();
+});
+
+/* SHORTCUT: tombol import kontekstual berdasarkan halaman aktif */
+$("importFile").addEventListener("click",()=>{});
+
+/* PERLINDUNGAN DATA: simpan saat halaman ditutup */
+window.addEventListener("beforeunload",()=>{
+  try{localStorage.setItem("santriedu_db_v1",JSON.stringify(db))}catch(e){}
+});
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState==="hidden"){
+    try{localStorage.setItem("santriedu_db_v1",JSON.stringify(db))}catch(e){}
+  }
+});
+
+/* INISIALISASI */
+loadDB();
+syncSettings();
+$("dashSemester").value=currentSemester();
+$("gradeSemester").value=currentSemester();
+$("reportSemester").value=currentSemester();
+renderAll();
+navigate("dashboard");
+</script>
+</body>
+</html>
